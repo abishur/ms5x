@@ -50,7 +50,7 @@ class MS5x
 	unsigned char send_cmd(uint8_t aCMD); // Sends a conversion command or read request to sensor
 	uint32_t read_adc(); // Converts D1 and D2 into scaled values.
 	uint8_t Calc_CRC4(uint16_t nprom[]); // Calculate expected CRC4
-    uint8_t Read_CRC4(); // Read CRC4 from sensor
+    	uint8_t Read_CRC4(); // Read CRC4 from sensor
 	void ReadProm(); // Reads factory scaling data, only needs to be read once at startup (or again after sensor reset) 
 	
 	// Variables
@@ -73,21 +73,21 @@ class MS5x
 	
   public:
 	// Functions
-    MS5x(TwoWire *aWire); // Constructor function
+    	MS5x(TwoWire *aWire); // Constructor function
 	
-    void setI2Caddr(int8_t aAddr); // Sets I2C address
-    uint8_t connect(uint8_t aCMD = MS5xxx_CMD_ADC_4096); // Connects to device and sets oversampling ratio.  Default is max oversampling
+    	void setI2Caddr(int8_t aAddr); // Sets I2C address
+    	uint8_t connect(uint8_t aCMD = MS5xxx_CMD_ADC_4096); // Connects to device and sets oversampling ratio.  Default is max oversampling
     
-    bool Readout(int32_t offset=0); // Converts Temperature and Pressure readings to Celcius and Mbar, offset is used to fix errors in temperature readings where 100 = 1.00 Celcious
+    	bool Readout(int32_t offset=0); // Converts Temperature and Pressure readings to Celcius and Mbar, offset is used to fix errors in temperature readings where 100 = 1.00 Celcious
 	
 	bool checkCRC();
-    uint8_t CRCcodeTest(); // Check validity of CRC, not working currently
+    	uint8_t CRCcodeTest(); // Check validity of CRC, not working currently
 	
 	void setSamples(uint8_t aCMD);
 	bool checkUpdates();
     
-    double GetTemp();
-    double GetPres();
+    	double GetTemp();
+    	double GetPres();
 	
 	// Variables
 };
