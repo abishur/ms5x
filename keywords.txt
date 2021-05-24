@@ -38,7 +38,7 @@
 	setI2Caddr		KEYWORD2
 	setPressMbar		KEYWORD2
 	setPressPa		KEYWORD2
-	setPressPsi		KEYWORD2
+	setPressHg		KEYWORD2
 	setTempC		KEYWORD2
 	setTempF		KEYWORD2
 	setTempK		KEYWORD2
