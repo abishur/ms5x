@@ -59,8 +59,8 @@ class MS5x
 	bool hasUpdates = false; // True when pressure and temperature values have updated
 	
 	int8_t i2caddr; // i2c address of sensor
+	int8_t readStep = 0; // Used to handle polling for sensor
 	
-	uint8_t readStep = 0; // Used to handle polling for sensor
 	uint8_t sampleRate = 0x08; // Oversampling rate, default is 4096.  Set using setSamples(aCMD) where aCMD is value as defined in definition area above (MS5xxx_CMD_ADC_####)
 	
 	uint16_t C[8]; // Calibration Coefficents
