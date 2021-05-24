@@ -27,21 +27,21 @@
 #include <Wire.h>
 
 // typical I2C-Address of chip
-#define I2C_MS5607 0x77
-#define I2C_MS5611 0x77
+#define I2C_LOW 0x76
+#define I2C_HIGH 0x77
 
 // I2C commands of chip
 #define MS5xxx_CMD_RESET	0x1E    // perform reset
-#define MS5xxx_CMD_ADC_READ 0x00    // initiate read sequence
-#define MS5xxx_CMD_ADC_CONV 0x40    // start conversion
-#define MS5xxx_CMD_ADC_D1   0x00    // read ADC 1
-#define MS5xxx_CMD_ADC_D2   0x10    // read ADC 2
-#define MS5xxx_CMD_ADC_256  0x00    // set ADC oversampling ratio to 256
-#define MS5xxx_CMD_ADC_512  0x02    // set ADC oversampling ratio to 512
-#define MS5xxx_CMD_ADC_1024 0x04    // set ADC oversampling ratio to 1024
-#define MS5xxx_CMD_ADC_2048 0x06    // set ADC oversampling ratio to 2048
-#define MS5xxx_CMD_ADC_4096 0x08    // set ADC oversampling ratio to 4096
-#define MS5xxx_CMD_PROM_RD  0xA0    // initiate readout of PROM registers
+#define MS5xxx_CMD_ADC_READ	0x00    // initiate read sequence
+#define MS5xxx_CMD_ADC_CONV	0x40    // start conversion
+#define MS5xxx_CMD_ADC_D1	0x00    // read ADC 1
+#define MS5xxx_CMD_ADC_D2	0x10    // read ADC 2
+#define MS5xxx_CMD_ADC_256	0x00    // set ADC oversampling ratio to 256
+#define MS5xxx_CMD_ADC_512	0x02    // set ADC oversampling ratio to 512
+#define MS5xxx_CMD_ADC_1024	0x04    // set ADC oversampling ratio to 1024
+#define MS5xxx_CMD_ADC_2048	0x06    // set ADC oversampling ratio to 2048
+#define MS5xxx_CMD_ADC_4096	0x08    // set ADC oversampling ratio to 4096
+#define MS5xxx_CMD_PROM_RD	0xA0    // initiate readout of PROM registers
 
 class MS5x
 {
@@ -62,6 +62,8 @@ class MS5x
 	int8_t readStep = 0; // Used to handle polling for sensor
 	
 	uint8_t sampleRate = 0x08; // Oversampling rate, default is 4096.  Set using setSamples(aCMD) where aCMD is value as defined in definition area above (MS5xxx_CMD_ADC_####)
+	uint8_t tType = 0; // Temperature units, 0 = C, 1 = F, 2 = K
+	uint8_t pType = 0; // Pressure units, 0 = Pa, 1 = mbar, 2 = inch Hg
 	
 	uint16_t C[8]; // Calibration Coefficents
 	
@@ -82,6 +84,12 @@ class MS5x
 	
 	void reset(); // Resets the sensor
 	void setI2Caddr(int8_t aAddr); // Sets I2C address
+	void setPressHg(); // Sets Pressure reading to Inches Murcury
+	void setPressMbar(); // Sets Pressure reading to millbars (default)
+	void setPressPa(); // Sets Pressure reading to Pascals
+	void setTempC(); // Sets Temperature reading to Celcius (default)
+	void setTempF(); // Sets Temperature reading to Fahrenheit
+	void setTempK(); // Sets Temperature reading to Kelvin
 	void setSamples(uint8_t aCMD);
 		
 	uint8_t connect(uint8_t aCMD = MS5xxx_CMD_ADC_4096); // Connects to device and sets oversampling ratio.  Default is max oversampling
