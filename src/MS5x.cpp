@@ -1,6 +1,6 @@
 /*
     MS5x.h - Library for accessing MS5x sensors via I2C
-    Copyright (c) 2012 Roman Schmitz
+    Copyright (c) 2021 Matthew Bennett
 
     This file is part of arduino-MS5x.
 
@@ -16,6 +16,10 @@
 
     You should have received a copy of the GNU General Public License
     along with arduino-MS5x.  If not, see <http://www.gnu.org/licenses/>.
+    
+    This code is loosely a fork of the arduino-MS5xxx library by Roman Schmitz
+    / a complete overhaul of his code to improve i2c communications, CRC checks,
+    provide addition unit options, and more.
 
 */
 
@@ -73,21 +77,6 @@ void MS5x::setI2Caddr(int8_t aAddr) {
 }
 
 //******************************************************** 
-//! @brief sets Pressure reading to be in Pascalls (default)
-//! 
-//! @return void
-//********************************************************
-void MS5x::setPressPa() {
-	if (P != 0 and pType != 0) { // Only convert if a new type is specified and Pressure has a value
-		switch (pType) {
-			case 1: P *= 100.0f; break; // mbar to Pa
-			case 2: P *= 3386.3886667; break; // inches Hg to Pa
-		}
-	}
-	pType = 0;
-}
-
-//******************************************************** 
 //! @brief sets Pressure reading to be in millbars 
 //! 
 //! @return void
@@ -97,6 +86,21 @@ void MS5x::setPressMbar() {
 		switch (pType) {
 			case 0: P *= .01f; break; // Pa to mbar
 			case 2: P /= 0.029529983071; break; // inches Hg to mbar
+		}
+	}
+	pType = 0;
+}
+
+//******************************************************** 
+//! @brief sets Pressure reading to be in Pascalls (default)
+//! 
+//! @return void
+//********************************************************
+void MS5x::setPressPa() {
+	if (P != 0 and pType != 0) { // Only convert if a new type is specified and Pressure has a value
+		switch (pType) {
+			case 1: P *= 100.0f; break; // mbar to Pa
+			case 2: P *= 3386.3886667; break; // inches Hg to Pa
 		}
 	}
 	pType = 1;
@@ -140,8 +144,8 @@ void MS5x::setTempC() {
 void MS5x::setTempF(){
 	if (TEMP != 0 and tType != 1) { // Only convert if a new type is specified and temp has a value
 		switch (tType) { // Convert from existing units to C
-			case 0: TEMP *= 9.0f/5.0f +32.0f; break; // C to F
-			case 2: TEMP *= 9.0f / 5.0f - 459.67; break; // K to F
+			case 0: TEMP = TEMP * 9.0f/5.0f +32.0f; break; // C to F
+			case 2: TEMP = TEMP * 9.0f / 5.0f - 459.67; break; // K to F
 		}
 	}
 	tType = 1;
@@ -441,18 +445,18 @@ bool MS5x::Readout(int32_t offset) {
 	TEMP *= 0.01f;
 	switch (pType)
 	{
-		case 0: break; // Pascal
-		case 1: P *= 0.01f; break; // millibar
-		case 2: P /= 3386.3886667; break; // Inches Hg
+		case 0: break; // millibar
+		case 1: P *= 100.0f; break; // Pascal
+		case 2: P /= 33.863886667; break; // Inches Hg
 	}
 	P *= 0.01f;	
 	
 	switch (tType)
-		{
-			case 0: break; // Celcius
-			case 1: TEMP *= 9.0f/5.0f +32.0f; break; // Fahrenheit
-			case 2: TEMP += 273.15f; break; // Kelvin
-		}
+	{
+		case 0: break; // Celcius
+		case 1: TEMP = TEMP * 9.0f/5.0f +32.0f; break; // Fahrenheit
+		case 2: TEMP += 273.15f; break; // Kelvin
+	}
 	
 	readStep += 1;
 	prevRead = millis();
