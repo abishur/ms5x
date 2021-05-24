@@ -26,47 +26,9 @@
 //! 
 //! @return N/A
 //********************************************************
-MS5x::MS5x(TwoWire *aWire) : i2caddr(I2C_MS5607) {
+MS5x::MS5x(TwoWire *aWire) : i2caddr(I2C_HIGH) {
 	_Wire=aWire;
 }
-
-//******************************************************** 
-//! @brief sets I2C address 
-//! 
-//! @return void
-//********************************************************
-void MS5x::setI2Caddr(int8_t aAddr) {
-	i2caddr=aAddr;
-}
-
-//******************************************************** 
-//! @brief intializes connection to sensor and sets up defauls values
-//! 
-//! @return byte (i2c status)
-//********************************************************
-uint8_t MS5x::connect(uint8_t aCMD) {
-	prevRead = millis(); // Initialize timer
-	setSamples(aCMD); // If a sample ratio has been provided, set sample ratio and delay
-	_Wire->begin();
-	_Wire->beginTransmission(i2caddr);
-	uint8_t ret=_Wire->endTransmission(true);
-	readStep = -1; // After starup, reset the device, and read PROM
-	return ret;
-}
-
-//******************************************************** 
-//! @brief sends command to sensor
-//! 
-//! @return byte (i2c status)
-//********************************************************
-uint8_t MS5x::send_cmd(uint8_t aCMD)
-{
-  _Wire->beginTransmission(i2caddr);
-  _Wire->write(aCMD);
-  uint8_t ret=_Wire->endTransmission(true);
-  return ret;
-}
-
 
 //******************************************************** 
 //! @brief reads factory calibration data, technically only needs to be called once
@@ -90,132 +52,116 @@ void MS5x::ReadProm() {
 	
 }
 
-//******************************************************** 
-//! @brief Calculates CRC based on 16 bits reserved for manufacturer,
-//! 6 calibration coefficents, and final CRC address.
-//! when called from checkCRC(), it can be used to confirm that sensor had
-//! CRC correctly set to calibration data in factory.
-//! 
-//! @return uint8_t (CRC calculation)
-//********************************************************
-uint8_t MS5x::Calc_CRC4(uint16_t n_prom[])
-{
-    int16_t cnt;                   		// simple counter
-    uint16_t n_rem;                 // CRC remainder
-    uint16_t crc_read;              // original value of the CRC
-    //unsigned int l_pol = poly;
-    uint8_t n_bit;
-
-    //l_pol = ( l_pol << 8 ) & 0xf000;	// shift bits and apply mask
-    n_rem = 0x00;
-
-    crc_read = n_prom[7];                  // save read RCR
-    n_prom[7] = (0xFF00 & (n_prom[7]));   // CRC byte is replaced by 0
-    for ( cnt = 0; cnt < 16; cnt++ )    // operation is performed on bytes
-    {// choose LSB or MSB
-        if ( cnt % 2 == 1 ) n_rem ^= (uint8_t)((n_prom[cnt>>1]) & 0x00FF);
-        else n_rem ^= (uint8_t)(n_prom[cnt>>1]>>8);
-
-        for (n_bit=8; n_bit>0; n_bit--)
-        {
-            if (n_rem & (0x8000))
-            {
-            	n_rem=(n_rem<<1) ^ 0x3000;//l_pol;
-            }
-            else
-            {
-                n_rem=(n_rem<<1);
-            }
-        }
-    }
-    
-    n_rem = (0x000F & (n_rem >> 12)); // final 4-bit remainder is CRC code
-	n_prom[7] = crc_read;
-    return (n_rem ^ 0x00);
+void MS5x::reset() {
+	// On device reset clear hasUpdates flag if set and reset device
+	readStep = -1;
+	hasUpdates = false;
+	readDelayPrev = readDelay;
+	readDelay = 3; // After a reset wait 3 ms before executing any commands.
+	send_cmd(MS5xxx_CMD_RESET);
+	prevRead = millis();
+	checkUpdates(); //Force checkUpdates to ensure proper order of code execution
 }
 
 //******************************************************** 
-//! @brief Reads CRC value from sensor
+//! @brief sets I2C address 
 //! 
-//! @return uint8_t (Stored CRC value in sensor)
+//! @return void
 //********************************************************
-uint8_t MS5x::Read_CRC4()
-{
-
-    unsigned int crc_read = ( 0x000F & ( C[ 7 ] ) );
-    return ( crc_read );
+void MS5x::setI2Caddr(int8_t aAddr) {
+	i2caddr=aAddr;
 }
 
 //******************************************************** 
-//! @brief Reads unscaled temperature or pressure data from sensor
-//! based on previous convserion command sent. 
+//! @brief sets Pressure reading to be in Pascalls (default)
 //! 
-//! @return uint32_t (Results of previous calculation.  If
-//! data requested prior to calculation finishing, sensor ressponds with 0)
+//! @return void
 //********************************************************
-uint32_t MS5x::read_adc()
-{
-  unsigned long value=0;
-  unsigned long r=0;
-
-  send_cmd(MS5xxx_CMD_ADC_READ);
-  _Wire->requestFrom(i2caddr, 3);
-  r = _Wire->read();
-  value = (r<<16);
-  r = _Wire->read();
-  value += (r<<8);
-  r = _Wire->read();
-  value += r;
- 
-  return value;
-}
-
-//******************************************************** 
-//! @brief Controls checking the sensor for updates.  When conversions are completed
-//! based on oversampling settings, function returns true.  No additional conversions will be
-//! calculated until Readout() function is called.
-//! 
-//! @return bool (sensor has finished processing sample calculations)
-//********************************************************
-bool MS5x::checkUpdates() {
-	uint32_t currMillis = millis();
-	if ((readStep > 4) || (readStep < -2)) readStep = 0;
-	if ((uint32_t)(currMillis - prevRead) >= readDelay) {
-		switch (readStep)
-		{
-			case -1:
-				send_cmd(MS5xxx_CMD_RESET);
-				readDelayPrev = readDelay;
-				readDelay = 3;
-				readStep += 1;
-				break;
-			case 0: // Send command to do Temperature calculations
-				ReadProm();
-				readDelay = readDelayPrev;
-				send_cmd(MS5xxx_CMD_ADC_CONV+MS5xxx_CMD_ADC_D2+sampleRate);
-				D1 = D2 = 0;
-				readStep += 1;
-				prevRead = currMillis;
-				break;
-			case 1: // Send command to read Temperature
-				D2 = read_adc();
-				readStep += 1;
-				prevRead = currMillis;
-				break;
-			case 2: // Send command to do Pressure calculations
-				send_cmd(MS5xxx_CMD_ADC_CONV+MS5xxx_CMD_ADC_D1+sampleRate);
-				readStep += 1;
-				prevRead = currMillis;
-				break;
-			case 3: // Send command to read Temperature
-				D1 = read_adc();
-				readStep += 1;
-				hasUpdates = true;
-				break;
-		}			
+void MS5x::setPressPa() {
+	if (P != 0 and pType != 0) { // Only convert if a new type is specified and Pressure has a value
+		switch (pType) {
+			case 1: P *= 100.0f; break; // mbar to Pa
+			case 2: P *= 3386.3886667; break; // inches Hg to Pa
+		}
 	}
-	return hasUpdates;
+	pType = 0;
 }
+
+//******************************************************** 
+//! @brief sets Pressure reading to be in millbars 
+//! 
+//! @return void
+//********************************************************
+void MS5x::setPressMbar() {
+	if (P != 0 and pType != 1) { // Only convert if a new type is specified and Pressure has a value
+		switch (pType) {
+			case 0: P *= .01f; break; // Pa to mbar
+			case 2: P /= 0.029529983071; break; // inches Hg to mbar
+		}
+	}
+	pType = 1;
+}
+
+//******************************************************** 
+//! @brief sets Pressure reading to be in Inches Mecury
+//! 
+//! @return void
+//********************************************************
+void MS5x::setPressHg() {
+	if (P != 0 and pType != 2) { // Only convert if a new type is specified and Pressure has a value
+		switch (pType) {
+			case 0: P /= 3386.3886667; break; // Pa to inches Hg
+			case 1: P /= 33.863886667; break; // mbar to inches Hg
+		}
+	}
+	pType = 2;
+}
+
+//******************************************************** 
+//! @brief sets Temperature reading to be in Celcius (default)
+//! 
+//! @return void
+//********************************************************
+void MS5x::setTempC() {
+	if (TEMP != 0 and tType != 0) { // Only convert if a new type is specified and temp has a value
+		switch (tType) { // Convert from existing units to C
+			case 1: TEMP = (TEMP - 32.0f) * 5.0f / 9.0f; break; // F to C
+			case 2: TEMP -= 273.15f; break; // K to C
+		}
+	}
+	tType = 0;
+}
+
+//******************************************************** 
+//! @brief sets Temperature reading to be in Fahrenheit
+//! 
+//! @return void
+//********************************************************
+void MS5x::setTempF(){
+	if (TEMP != 0 and tType != 1) { // Only convert if a new type is specified and temp has a value
+		switch (tType) { // Convert from existing units to C
+			case 0: TEMP *= 9.0f/5.0f +32.0f; break; // C to F
+			case 2: TEMP *= 9.0f / 5.0f - 459.67; break; // K to F
+		}
+	}
+	tType = 1;
+}
+
+//******************************************************** 
+//! @brief sets Temperature reading to be in Kelvin
+//! 
+//! @return void
+//********************************************************
+void MS5x::setTempK() {
+	if (TEMP != 0 and tType != 2) { // Only convert if a new type is specified and temp has a value
+		switch (tType) { // Convert from existing units to C
+			case 0: TEMP += 273.15f;; break; // C to K
+			case 1: TEMP = (TEMP + 459.67) * 5.0f/9.0f; break; // F to K
+		}
+	}
+	tType = 2;
+}
+
 
 //******************************************************** 
 //! @brief Sets the desired oversampling ratio along with minimum required delays rates
@@ -250,87 +196,62 @@ void MS5x::setSamples(uint8_t samples) {
 }
 
 //******************************************************** 
-//! @brief Converts unscaled temperature and pressure readings into scaled values
-//! pressure reading is temperature compensated.
+//! @brief Calculates CRC based on 16 bits reserved for manufacturer,
+//! 6 calibration coefficents, and final CRC address.
+//! when called from checkCRC(), it can be used to confirm that sensor had
+//! CRC correctly set to calibration data in factory.
+//! Please reference TE Connectivity tech note AN520 for more information
 //! 
-//! @return bool (false if readout was called prior to new values being available)
+//! @return uint8_t (CRC calculation)
 //********************************************************
-bool MS5x::Readout(int32_t offset) {
-	if (!hasUpdates) return false;
-	
-	double dT;
-	double OFF;
-	double SENS;
+uint8_t MS5x::Calc_CRC4(uint16_t n_prom[])
+{
+    uint8_t n_bit;
+    int16_t cnt; // Simple counter
+    uint16_t n_rem; // CRC remainder
+    uint16_t crc_read; // Original value of the CRC
 
-	// calculate 1st order pressure and temperature (MS5607 1st order algorithm)
-	dT=D2-C[5]*256; // D2 - Tref = D2 - C5 * 2^8
-	
-	#ifdef MS5611
-		OFF=((double)C[2]*65536.)+(dT*(double)C[4])/128.; // OFFt1 + TCO * dT = C2 * 2^16 + (C4 * dT) / 2^7
-		SENS=(double)C[1]*32768.+(dT*(double)C[3])/256.; // SENSt1 + TCS * dT = C1 * 2^15 + (C3*dT) / 2^8
-	#else
-		OFF=C[2]*131072+dT*C[4]/64; // OFFt1 + TCO * dT = C2 * 2^17 + (C4 * dT) / 2^6
-		SENS=C[1]*65536+dT*C[3]/128; // SENSt1 + TCS * dT = C1 * 2^16 + (C3*dT) / 2^7
-	#endif
-	
-	TEMP=(2000.+(dT*(double)C[6])/8388608.)+(double)offset; // 20C + dT * TEMPSENS = 2000 + dT * C6 / 2^23
-	
-	 
-	// perform higher order corrections
-	double T2=0., OFF2=0., SENS2=0.;
-	if(TEMP<2000) {
-		T2=dT*dT/2147483648.; // dT^2 / 2^31
-		#ifdef MS5611
-			OFF2=5.*((TEMP-2000.)*(TEMP-2000.))/2.; // 5 * (TEMP - 2000)^2 / 2
-			SENS2=5.*((TEMP-2000.)*(TEMP-2000.))/4.; // 5 * (TEMP - 2000)^2 / 4
-		#else
-			OFF2=61*(TEMP-2000)*(TEMP-2000)/16; // 61 * (TEMP - 2000)^2 / 4
-			SENS2=2*(TEMP-2000)*(TEMP-2000); // 2 * (TEMP - 2000)^2
-		#endif
-	  
-	  if(TEMP<-1500) {
-		#ifdef MS5611
-			OFF2+=7.*((TEMP+1500.)*(TEMP+1500.)); // OFF2 + 7 * (TEMP + 1500)^2
-			SENS2+=11.*((TEMP+1500.)*(TEMP+1500.))/2.; // SENS2 + 11 * (TEMP + 1500) ^2 /2
-		#else
-			OFF2+=15*(TEMP+1500)*(TEMP+1500);
-			SENS2+=8*(TEMP+1500)*(TEMP+1500);
-		#endif
-	    
-	  }
-	}
-	  
-	TEMP-=T2;
-	OFF-=OFF2;
-	SENS-=SENS2;
-	P=(D1*SENS/2097152.-OFF)/32768.; // (((D1*SENS)/pow(2,21)-OFF)/pow(2,15))
+    n_rem = 0x00;
 
-	TEMP *= 0.01;
-	P *= 0.01;	
-	
-	readStep += 1;
-	prevRead = millis();
-	hasUpdates = false;
-	
-	return true;
+    crc_read = n_prom[7];	// Save original value of CRC
+    n_prom[7] = (0xFF00 & (n_prom[7])); // CRC byte is replaced by 0
+    for ( cnt = 0; cnt < 16; cnt++ ) // Operation is performed on bytes
+    {
+		// choose LSB or MSB
+        if ( cnt % 2 == 1 ) n_rem ^= (uint8_t)((n_prom[cnt>>1]) & 0x00FF);
+        else n_rem ^= (uint8_t)(n_prom[cnt>>1]>>8);
+
+        for (n_bit=8; n_bit>0; n_bit--)
+        {
+            if (n_rem & (0x8000))
+            {
+            	n_rem=(n_rem<<1) ^ 0x3000;
+            }
+            else
+            {
+                n_rem=(n_rem<<1);
+            }
+        }
+    }
+    
+    n_rem = (0x000F & (n_rem >> 12)); // final 4-bit remainder is CRC code
+	n_prom[7] = crc_read; // restore the CRC_READ to it original place
+    return (n_rem ^ 0x00);
 }
 
 //******************************************************** 
-//! @brief Returns sensor temperature, must be updated by calling Readout()
+//! @brief intializes connection to sensor and sets up defauls values
 //! 
-//! @return double (Sensor's Temperature)
+//! @return byte (i2c status)
 //********************************************************
-double MS5x::GetTemp() {
-	return TEMP;
-}
-
-//******************************************************** 
-//! @brief Returns sensor pressure, must be updated by calling Readout()
-//! 
-//! @return double (Sensor's Pressure)
-//********************************************************
-double MS5x::GetPres() {
-	return P;
+uint8_t MS5x::connect(uint8_t aCMD) {
+	prevRead = millis(); // Initialize timer
+	setSamples(aCMD); // If a sample ratio has been provided, set sample ratio and delay
+	_Wire->begin();
+	_Wire->beginTransmission(i2caddr);
+	uint8_t ret=_Wire->endTransmission(true);
+	reset(); // After starup, reset the device, and read PROM
+	return ret;
 }
 
 //******************************************************** 
@@ -348,6 +269,55 @@ uint8_t MS5x::CRCcodeTest(){
 }
 
 //******************************************************** 
+//! @brief Reads CRC value from sensor
+//! 
+//! @return uint8_t (Stored CRC value in sensor)
+//********************************************************
+uint8_t MS5x::Read_CRC4()
+{
+
+    unsigned int crc_read = ( 0x000F & ( C[ 7 ] ) );
+    return ( crc_read );
+}
+
+//******************************************************** 
+//! @brief sends command to sensor
+//! 
+//! @return byte (i2c status)
+//********************************************************
+uint8_t MS5x::send_cmd(uint8_t aCMD)
+{
+  _Wire->beginTransmission(i2caddr);
+  _Wire->write(aCMD);
+  uint8_t ret=_Wire->endTransmission(true);
+  return ret;
+}
+
+//******************************************************** 
+//! @brief Reads unscaled temperature or pressure data from sensor
+//! based on previous convserion command sent. 
+//! 
+//! @return uint32_t (Results of previous calculation.  If
+//! data requested prior to calculation finishing, sensor ressponds with 0)
+//********************************************************
+uint32_t MS5x::read_adc()
+{
+  unsigned long value=0;
+  unsigned long r=0;
+
+  send_cmd(MS5xxx_CMD_ADC_READ);
+  _Wire->requestFrom(i2caddr, 3);
+  r = _Wire->read();
+  value = (r<<16);
+  r = _Wire->read();
+  value += (r<<8);
+  r = _Wire->read();
+  value += r;
+ 
+  return value;
+}
+
+//******************************************************** 
 //! @brief performs calculation of CRC based on factory set calibration coefficents and confirms it is
 //! equal to the factory set CRC value.
 //! What does this actually do?  It's not like it confirms sensor was calibrated correctly in the factory,
@@ -361,4 +331,150 @@ bool MS5x::checkCRC()  {
 	bool statusRet = false;
 	if ((Calc_CRC4(C) == Read_CRC4())) statusRet = true;
 	return statusRet;
+}
+
+
+//******************************************************** 
+//! @brief Controls checking the sensor for updates.  When conversions are completed
+//! based on oversampling settings, function returns true.  No additional conversions will be
+//! calculated until Readout() function is called.
+//! 
+//! @return bool (sensor has finished processing sample calculations)
+//********************************************************
+bool MS5x::checkUpdates() {
+	uint32_t currMillis = millis();
+	if (readStep > 4) readStep = 0;
+	if ((uint32_t)(currMillis - prevRead) >= readDelay) {
+		switch (readStep)
+		{
+			case -1: // -1 is set when reset() function is called.  Restores read delay settings
+				ReadProm(); // Read Prom doesn't need to be called each cycle
+				readDelay = readDelayPrev;
+				readStep += 1;
+				prevRead = currMillis;
+				break;
+			case 0: // Send command to do Temperature calculations
+				send_cmd(MS5xxx_CMD_ADC_CONV+MS5xxx_CMD_ADC_D2+sampleRate);
+				D1 = D2 = 0;
+				readStep += 1;
+				prevRead = currMillis;
+				break;
+			case 1: // Send command to read Temperature
+				D2 = read_adc();
+				readStep += 1;
+				prevRead = currMillis;
+				break;
+			case 2: // Send command to do Pressure calculations
+				send_cmd(MS5xxx_CMD_ADC_CONV+MS5xxx_CMD_ADC_D1+sampleRate);
+				readStep += 1;
+				prevRead = currMillis;
+				break;
+			case 3: // Send command to read Temperature
+				D1 = read_adc();
+				readStep += 1;
+				hasUpdates = true;
+				break;
+		}			
+	}
+	return hasUpdates;
+}
+
+//******************************************************** 
+//! @brief Converts unscaled temperature and pressure readings into scaled values
+//! pressure reading is temperature compensated.
+//! 
+//! @return bool (false if readout was called prior to new values being available)
+//********************************************************
+bool MS5x::Readout(int32_t offset) {
+	if (!hasUpdates) return false;
+	
+	// While sensor document states these variables should be int32 and int64 unless everything is
+	// int64 calculation errors occur.  To ensure compatibility across multiple platforms, I've chosen to
+	// make their types as doubles.
+	double dT; // Difference in actual vs reference temperature
+	double OFF; // Offset at actual temperature
+	double SENS; //Sensitivy at actual temperature
+
+	// calculate 1st order pressure and temperature (MS5607 1st order algorithm)
+	dT=(float)D2-(float)C[5]*256.0f; // D2 - Tref = D2 - C5 * 2^8
+	
+	#ifdef MS5611
+		OFF=(float)C[2]*65536.0f+(dT*(float)C[4])/128.0f; // OFFt1 + TCO * dT = C2 * 2^16 + (C4 * dT) / 2^7
+		SENS=(float)C[1]*32768.0f+(dT*(float)C[3])/256.0f; // SENSt1 + TCS * dT = C1 * 2^15 + (C3*dT) / 2^8
+	#else
+		OFF=(float)C[2]*131072.0f+(float)dT*C[4]/64.0f; // OFFt1 + TCO * dT = C2 * 2^17 + (C4 * dT) / 2^6
+		SENS=(float)C[1]*65536.0f+(float)dT*C[3]/128.0f; // SENSt1 + TCS * dT = C1 * 2^16 + (C3*dT) / 2^7
+	#endif
+	
+	TEMP=(2000.0f+(dT*(float)C[6])/8388608.0f)+(float)offset; // 20C + dT * TEMPSENS = 2000 + dT * C6 / 2^23
+	
+	 
+	// perform higher order corrections
+	double T2=0., OFF2=0., SENS2=0.;
+	if(TEMP<2000) {
+		T2=dT*dT/2147483648.0f; // dT^2 / 2^31
+		#ifdef MS5611
+			OFF2=5.0f*((TEMP-2000.0f)*(TEMP-2000.0f))/2.0f; // 5 * (TEMP - 2000)^2 / 2
+			SENS2=5.0f*((TEMP-2000.0f)*(TEMP-2000.0f))/4.0f; // 5 * (TEMP - 2000)^2 / 4
+		#else
+			OFF2=61.0f*(TEMP-2000.0f)*(TEMP-2000.0f)/16.0f; // 61 * (TEMP - 2000)^2 / 4
+			SENS2=2.0f*(TEMP-2000.0f)*(TEMP-2000.0f); // 2 * (TEMP - 2000)^2
+		#endif
+	  
+	  if(TEMP<-1500.0f) {
+		#ifdef MS5611
+			OFF2+=7.0f*((TEMP+1500.0f)*(TEMP+1500.0f)); // OFF2 + 7 * (TEMP + 1500)^2
+			SENS2+=11.0f*((TEMP+1500.0f)*(TEMP+1500.0f))/2.0f; // SENS2 + 11 * (TEMP + 1500) ^2 /2
+		#else
+			OFF2+=15.0f*(TEMP+1500.0f)*(TEMP+1500.0f);
+			SENS2+=8.0f*(TEMP+1500.0f)*(TEMP+1500.0f);
+		#endif
+	    
+	  }
+	}
+	  
+	TEMP-=T2;
+	OFF-=OFF2;
+	SENS-=SENS2;
+	P=(D1*SENS/2097152.0f-OFF)/32768.0f; // (((D1*SENS)/pow(2,21)-OFF)/pow(2,15))
+
+	TEMP *= 0.01f;
+	switch (pType)
+	{
+		case 0: break; // Pascal
+		case 1: P *= 0.01f; break; // millibar
+		case 2: P /= 3386.3886667; break; // Inches Hg
+	}
+	P *= 0.01f;	
+	
+	switch (tType)
+		{
+			case 0: break; // Celcius
+			case 1: TEMP *= 9.0f/5.0f +32.0f; break; // Fahrenheit
+			case 2: TEMP += 273.15f; break; // Kelvin
+		}
+	
+	readStep += 1;
+	prevRead = millis();
+	hasUpdates = false;
+	
+	return true;
+}
+
+//******************************************************** 
+//! @brief Returns sensor pressure, must be updated by calling Readout()
+//! 
+//! @return double (Sensor's Pressure)
+//********************************************************
+double MS5x::GetPres() {
+	return P;
+}
+
+//******************************************************** 
+//! @brief Returns sensor temperature, must be updated by calling Readout()
+//! 
+//! @return double (Sensor's Temperature)
+//********************************************************
+double MS5x::GetTemp() {
+	return TEMP;
 }
