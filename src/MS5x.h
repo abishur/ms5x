@@ -80,14 +80,14 @@ class MS5x
     
     	bool Readout(int32_t offset=0); // Converts Temperature and Pressure readings to Celcius and Mbar, offset is used to fix errors in temperature readings where 100 = 1.00 Celcious
 	
-	bool checkCRC();
-    	uint8_t CRCcodeTest(); // Check validity of CRC, not working currently
+	bool checkCRC();  // Check validity of CRC
+    	uint8_t CRCcodeTest(); // Used to make sure the Calc_CRC4 function was working correctly serves no function in actual program beyond showing an example of how CRC check works
 	
-	void setSamples(uint8_t aCMD);
-	bool checkUpdates();
+	void setSamples(uint8_t aCMD); // Set the oversampling ratio, use one of the MS5xxx_CMD_ADC_#### defined above
+	bool checkUpdates(); // Include in main loop, will perform temp/pressure polling and return true when updated values are available
     
-    	double GetTemp();
-    	double GetPres();
+    	double GetTemp(); // Get Temperature
+    	double GetPres(); // Get Pressure
 	
 	// Variables
 };
