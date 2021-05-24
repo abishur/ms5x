@@ -21,7 +21,7 @@
 #ifndef MS5x_h
 #define MS5x_h
 
-#define MS5611
+#define MS5611 // Comment out this line if you are using the MS5607
 
 #include "Arduino.h"
 #include <Wire.h>
