@@ -80,18 +80,19 @@ class MS5x
 	// Functions
 	MS5x(TwoWire *aWire); // Constructor function
 	
+	void reset(); // Resets the sensor
 	void setI2Caddr(int8_t aAddr); // Sets I2C address
 	void setSamples(uint8_t aCMD);
 		
 	uint8_t connect(uint8_t aCMD = MS5xxx_CMD_ADC_4096); // Connects to device and sets oversampling ratio.  Default is max oversampling
 	uint8_t CRCcodeTest(); // Check validity of CRC, not working currently
 
-	bool Readout(int32_t offset=0); // Converts Temperature and Pressure readings to Celcius and Mbar, offset is used to fix errors in temperature readings where 100 = 1.00 Celcious
 	bool checkCRC();
 	bool checkUpdates();
+	bool Readout(int32_t offset=0); // Converts Temperature and Pressure readings to Celcius and Mbar, offset is used to fix errors in temperature readings where 100 = 1.00 Celcious
 	
-	double GetTemp();
 	double GetPres();
+	double GetTemp();
 	
 	// Variables
 };
