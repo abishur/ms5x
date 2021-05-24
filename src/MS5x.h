@@ -32,16 +32,16 @@
 
 // I2C commands of chip
 #define MS5xxx_CMD_RESET	0x1E    // perform reset
-#define MS5xxx_CMD_ADC_READ 0x00    // initiate read sequence
-#define MS5xxx_CMD_ADC_CONV 0x40    // start conversion
-#define MS5xxx_CMD_ADC_D1   0x00    // read ADC 1
-#define MS5xxx_CMD_ADC_D2   0x10    // read ADC 2
-#define MS5xxx_CMD_ADC_256  0x00    // set ADC oversampling ratio to 256
-#define MS5xxx_CMD_ADC_512  0x02    // set ADC oversampling ratio to 512
-#define MS5xxx_CMD_ADC_1024 0x04    // set ADC oversampling ratio to 1024
-#define MS5xxx_CMD_ADC_2048 0x06    // set ADC oversampling ratio to 2048
-#define MS5xxx_CMD_ADC_4096 0x08    // set ADC oversampling ratio to 4096
-#define MS5xxx_CMD_PROM_RD  0xA0    // initiate readout of PROM registers
+#define MS5xxx_CMD_ADC_READ	0x00    // initiate read sequence
+#define MS5xxx_CMD_ADC_CONV 	0x40    // start conversion
+#define MS5xxx_CMD_ADC_D1   	0x00    // read ADC 1
+#define MS5xxx_CMD_ADC_D2   	0x10    // read ADC 2
+#define MS5xxx_CMD_ADC_256  	0x00    // set ADC oversampling ratio to 256
+#define MS5xxx_CMD_ADC_512  	0x02    // set ADC oversampling ratio to 512
+#define MS5xxx_CMD_ADC_1024 	0x04    // set ADC oversampling ratio to 1024
+#define MS5xxx_CMD_ADC_2048 	0x06    // set ADC oversampling ratio to 2048
+#define MS5xxx_CMD_ADC_4096 	0x08    // set ADC oversampling ratio to 4096
+#define MS5xxx_CMD_PROM_RD  	0xA0    // initiate readout of PROM registers
 
 class MS5x
 {
