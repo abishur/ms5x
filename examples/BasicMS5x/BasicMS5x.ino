@@ -45,9 +45,6 @@ void setup() {
 	}
 	Serial.println(F("Connected to Sensor"));
 	delay(5);
-	
-		
-
 }
 
 void loop() {
@@ -64,7 +61,6 @@ void loop() {
 	*/
 	barometer.checkUpdates();
 	   
-
 	/* 
 	Updates Temperature and Pressure values for reading.  Until sensor is done with first set of calculations values will be zero.
 	At max oversampling from the time the sensor is first connected to the time all conversions are complete is
