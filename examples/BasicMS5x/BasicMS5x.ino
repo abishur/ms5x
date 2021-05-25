@@ -49,8 +49,8 @@ void setup() {
 
 void loop() {
 	
-	double pressure
-	double temperature
+	double pressure;
+	double temperature;
 	/* 
 	In order to not have any delays used in code, checkUpdates cycles through sensor read process
 	Step 1: Ask for raw temperature calculation to be performed
