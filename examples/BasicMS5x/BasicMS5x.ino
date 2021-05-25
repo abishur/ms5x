@@ -41,10 +41,10 @@ void setup() {
 	Serial.begin(115200);
 	while(barometer.connect()>0) { // barometer.connect starts wire and attempts to connect to sensor
 		Serial.println(F("Error connecting..."));
-    delay(500);
+		delay(500);
 	}
 	Serial.println(F("Connected to Sensor"));
-	delay(5);
+	delay(5); // Allow Sensor to finish resetting after initial connection
 }
 
 void loop() {
@@ -57,7 +57,7 @@ void loop() {
 	Step 2: Once enough time has passed for calculation ask sensor to send results
 	Step 3: Ask for raw pressure calculation to be performed
 	Step 4: Once enough time has passed for calculation ask sensor to send results
-    At this point conversion preocess is complete and no new sensor readings will be performed until Readout function is called. 
+	At this point conversion preocess is complete and no new sensor readings will be performed until Readout function is called. 
 	*/
 	barometer.checkUpdates();
 	   
