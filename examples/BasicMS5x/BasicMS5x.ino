@@ -44,7 +44,6 @@ void setup() {
 		delay(500);
 	}
 	Serial.println(F("Connected to Sensor"));
-	delay(5); // Allow Sensor to finish resetting after initial connection
 }
 
 void loop() {
