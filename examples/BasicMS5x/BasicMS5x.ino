@@ -1,7 +1,12 @@
 /*
-    AdvancedMS5x.ino - Shows how to quickly connect to MS56xx sensors and
-	perform a quick CRC check to ensure sensor was calibrated prior to leaving factory.
-    Copyright (c) 2021 Matthew Bennett
+    BasicMS5x.ino 
+	
+	Shows how to quickly connect to sensor using default address (0x77) and oversampling ratio (maximum oversampling)
+    
+	Created 2021-05-25 
+	By Matthew Bennett
+	Modified -
+	By -
 
     This file is part of arduino-MS5x.
 
@@ -38,45 +43,41 @@ void setup() {
 		Serial.println(F("Error connecting..."));
     delay(500);
 	}
-		Serial.println(F("Connected to Sensor"));
+	Serial.println(F("Connected to Sensor"));
+	delay(5);
+	
+		
 
 }
 
 void loop() {
-	/* In order to not have any delays used in code, checkUpdates cycles through sensor read process
-	   Step 1: Ask for raw temperature calculation to be performed
-	   Step 2: Once enough time has passed for calculation ask sensor to send results
-	   Step 3: Ask for raw pressure calculation to be performed
-	   Step 4: Once enough time has passed for calculation ask sensor to send results
-       At this point checkUpdates returns true, but no new sensor readings will be performed until Readout function is called. */
-	if (barometer.checkUpdates()) {
-		
-		/* I recommend that you perfrom a CRC check just once the first time you get a sensor
-		   What this does is do a CRC calculation based on the factory sensor callibration coefficents
-		   and then compares it to the CRC value stored in the sensor.  If they entered the data correctly
-		   then this function returns true.  Note, this doesn't guarentee that the sensor is calibrated correctly really.
-		   All it does is confirm they entered the CRC correctly based on the values they burned into sensors PROM.
-		   But if this comes back false then you definitely shouldn't trust it.
-		*/
-		bool crcRes = barometer.checkCRC();
-		Serial.print(F("Sensor CRC Check Results: "));
-		Serial.println(crcRes);
-		
-		/* This will confirm that the code to check the CRC values are accurate.  Sample PROM values were taken from
-		TE-Connectivity tech note AN520.  If this returns anything except 0xB, then I  have a problem with the checkCRC() function.
-		*/
-		uint8_t crcTest = barometer.CRCcodeTest();
-		Serial.println(F("This function should return 0xB."));
-		Serial.print(F("CRC code check returned: 0x"));
-		Serial.println(crcTest, HEX);
-		
-		if (barometer.Readout()) { // Updates Temperature and Pressure values for reading.  Returns false if sensor calculations are not finished.
-			double temperature = barometer.GetTemp(); // Returns temperature in C
-			double pressure = barometer.GetPres(); // Returns pressure in Mbar
-			Serial.print(F("The Temperature is: "));
-			Serial.println(temperature);
-			Serial.print(F("The Pressure is: "));
-			Serial.println(pressure);
-		}
+	
+	double pressure
+	double temperature
+	/* 
+	In order to not have any delays used in code, checkUpdates cycles through sensor read process
+	Step 1: Ask for raw temperature calculation to be performed
+	Step 2: Once enough time has passed for calculation ask sensor to send results
+	Step 3: Ask for raw pressure calculation to be performed
+	Step 4: Once enough time has passed for calculation ask sensor to send results
+    At this point conversion preocess is complete and no new sensor readings will be performed until Readout function is called. 
+	*/
+	barometer.checkUpdates();
+	   
+
+	/* 
+	Updates Temperature and Pressure values for reading.  Until sensor is done with first set of calculations values will be zero.
+	At max oversampling from the time the sensor is first connected to the time all conversions are complete is
+	3 ms for booting + 10 ms for each step = ~43 ms + the amount of time it takes to run through a loop.
+	
+	Alternatively, prior to reading temperature and pressure data, check isReady().
+	*/
+	if (barometer.isReady()) { 
+		temperature = barometer.GetTemp(); // Returns temperature in C
+		pressure = barometer.GetPres(); // Returns pressure in Pascals
+		Serial.print(F("The Temperature is: "));
+		Serial.println(temperature);
+		Serial.print(F("The Pressure is: "));
+		Serial.println(pressure);
 	}
 }
