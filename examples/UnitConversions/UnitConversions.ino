@@ -1,6 +1,12 @@
 /*
-    UnitConversions.ino - Shows how to set preferred temperature and pressure units
-    Copyright (c) 2021 Matthew Bennett
+    UnitConversions.ino 
+	
+	Shows how to set preferred temperature and pressure units
+    
+	Created 2021-05-25 
+	By Matthew Bennett
+	Modified -
+	By -
 
     This file is part of arduino-MS5x.
 
@@ -35,11 +41,10 @@ void setup() {
 	Serial.begin(115200);
 	while(barometer.connect()>0) { // barometer.connect starts wire and attempts to connect to sensor
 		Serial.println(F("Error connecting..."));
-    delay(500);
+		delay(500);
 	}
 	Serial.println(F("Connected to Sensor"));
 		
-	
 	//These three lines will set the temperature units returned by GetTemp().
 
 	//barometer.setTempC(); // Uncommenting this line will have GetTemp() return temperature in Celcius (default temperature units)
@@ -47,27 +52,32 @@ void setup() {
 	//barometer.setTempK(); // Uncommenting this line will have GetTemp() return temperature in Kelvin 
 	
 	//These three lines will set the pressure units returned by GetPress().
-	//barometer.setPressMbar(); // Uncommenting this line will have GetPress() return Pressure in Millibars (default pressure units)
+	
 	//barometer.setPressHg(); // Uncommenting this line will have GetPress() return Pressure in Inches Mercury (Inches Hg)
-	//barometer.setPressPa(); // Uncommenting this line will have GetPress() return Pressure in Pascals
+	//barometer.setPressMbar(); // Uncommenting this line will have GetPress() return Pressure in Millibars 
+	//barometer.setPressPa(); // Uncommenting this line will have GetPress() return Pressure in Pascals (default pressure units)
 
 }
 
 void loop() {
+	
+	double pressure;
+	double temperature;
+	
 	/* In order to not have any delays used in code, checkUpdates cycles through sensor read process
 	   Step 1: Ask for raw temperature calculation to be performed
 	   Step 2: Once enough time has passed for calculation ask sensor to send results
 	   Step 3: Ask for raw pressure calculation to be performed
 	   Step 4: Once enough time has passed for calculation ask sensor to send results
        At this point checkUpdates returns true, but no new sensor readings will be performed until Readout function is called. */
-	if (barometer.checkUpdates()) {		
-		if (barometer.Readout()) { // Updates Temperature and Pressure values for reading.  Returns false if sensor calculations are not finished.
-			double temperature = barometer.GetTemp(); // Returns temperature in CRC
-			double pressure = barometer.GetPres(); // Returns pressure in Mbar
-			Serial.print(F("The Temperature is: "));
-			Serial.println(temperature);
-			Serial.print(F("The Pressure is: "));
-			Serial.println(pressure);
-		}
+	   barometer.checkUpdates();
+	   
+	if (barometer.isReady()) { 		
+		temperature = barometer.GetTemp(); // Returns temperature in CRC
+		pressure = barometer.GetPres(); // Returns pressure in Mbar
+		Serial.print(F("The Temperature is: "));
+		Serial.println(temperature);
+		Serial.print(F("The Pressure is: "));
+		Serial.println(pressure);
 	}
 }
