@@ -76,9 +76,6 @@ void loop() {
 	Alternatively, prior to reading temperature and pressure data, check isReady().
 	*/
 	if (barometer.isReady()) { 
-	
-		// Calculate predicted seaLevel pressure based off a known altitude in meters
-		if (seaLevel == 0) seaLevel = barometer.getSeaLevel(217.3); 
 		
 		temperature = barometer.GetTemp(); // Returns temperature in C
 		pressure = barometer.GetPres(); // Returns pressure in Pascals
@@ -86,6 +83,9 @@ void loop() {
 		// If a new temperature or pressure reading comes in then the sensor has been polled.
 		// Print the new values and the time, in ms, between readings
 		if ((temperature != prevTemperature) || (pressure != prevPressure)) {
+			
+			// Calculate predicted seaLevel pressure based off a known altitude in meters
+			if (seaLevel == 0) seaLevel = barometer.getSeaLevel(217.3); 
 
 			Serial.print(F("The current pressure is: "));
 			Serial.print(pressure);
