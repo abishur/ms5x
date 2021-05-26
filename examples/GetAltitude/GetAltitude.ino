@@ -107,7 +107,7 @@ void loop() {
 			
 			// Calculate current altitude performing temperature corrections
 			altitude = barometer.getAltitude(true);
-			Serial.print(F("The calculated altitude with themperature correction is: "));
+			Serial.print(F("The calculated altitude with temperature correction is: "));
 			Serial.print(altitude);
 			Serial.println(F(" meters"));
 			
