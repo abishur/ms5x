@@ -37,6 +37,11 @@
 
 MS5x barometer(&Wire);
 
+uint32_t prevTime; // The time, in MS the device was last polled
+
+double prevPressure=0; // The value of the pressure the last time the sensor was polled
+double prevTemperature=0; // The value of the temperature the last time the sensor was polled
+
 void setup() {
 	Serial.begin(115200);
 	while(barometer.connect()>0) { // barometer.connect starts wire and attempts to connect to sensor
@@ -56,13 +61,14 @@ void setup() {
 	//barometer.setPressHg(); // Uncommenting this line will have GetPress() return Pressure in Inches Mercury (Inches Hg)
 	//barometer.setPressMbar(); // Uncommenting this line will have GetPress() return Pressure in Millibars 
 	//barometer.setPressPa(); // Uncommenting this line will have GetPress() return Pressure in Pascals (default pressure units)
-
+	
+	barometer.setDelay(1000); // barometer will wait 1 second before taking new temperature and pressure readings
 }
 
 void loop() {
 	
-	double pressure;
-	double temperature;
+	double pressure = 0;
+	double temperature = 0;
 	
 	/* In order to not have any delays used in code, checkUpdates cycles through sensor read process
 	   Step 1: Ask for raw temperature calculation to be performed
@@ -75,9 +81,15 @@ void loop() {
 	if (barometer.isReady()) { 		
 		temperature = barometer.GetTemp(); // Returns temperature in CRC
 		pressure = barometer.GetPres(); // Returns pressure in Mbar
-		Serial.print(F("The Temperature is: "));
-		Serial.println(temperature);
-		Serial.print(F("The Pressure is: "));
-		Serial.println(pressure);
+		
+		if ((temperature != prevTemperature) || (pressure != prevPressure)) {
+			Serial.print(F("The Temperature is: "));
+			Serial.println(temperature);
+			Serial.print(F("The Pressure is: "));
+			Serial.println(pressure);
+			prevTime = millis();
+			prevTemperature = temperature;
+			prevPressure = pressure;
+		}
 	}
 }
