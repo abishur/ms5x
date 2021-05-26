@@ -79,8 +79,8 @@ void loop() {
 	   barometer.checkUpdates();
 	   
 	if (barometer.isReady()) { 		
-		temperature = barometer.GetTemp(); // Returns temperature in CRC
-		pressure = barometer.GetPres(); // Returns pressure in Mbar
+		temperature = barometer.GetTemp(); // Returns temperature in selected units
+		pressure = barometer.GetPres(); // Returns pressure in selected units
 		
 		if ((temperature != prevTemperature) || (pressure != prevPressure)) {
 			Serial.print(F("The Temperature is: "));
