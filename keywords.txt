@@ -1,25 +1,3 @@
-###################################################################################
-#
-#   MS5x.h - Library for accessing MS5x sensors via I2C
-#   Copyright (c) 2021 Matthew Bennett
-#
-#   MS5x is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-#
-#   MS5x is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with MS5x.  If not, see <http://www.gnu.org/licenses/>.
-#
-#   This code is a fork of the arduino-MS5xxx library by Roman Schmitz
-#
-###################################################################################
-
 #######################################
 # Syntax Coloring Map For MS5x
 #######################################
@@ -34,11 +12,15 @@
 # Methods and Functions (KEYWORD2)
 #######################################
 
+	checkUpdates		KEYWORD2
 	reset			KEYWORD2
 	setI2Caddr		KEYWORD2
+	setDelay		KEYWORD2
+	setPOffset		KEYWORD2
+	setTOffset		KEYWORD2
+	setPressHg		KEYWORD2
 	setPressMbar		KEYWORD2
 	setPressPa		KEYWORD2
-	setPressHg		KEYWORD2
 	setTempC		KEYWORD2
 	setTempF		KEYWORD2
 	setTempK		KEYWORD2
@@ -48,9 +30,10 @@
 	CRCcodeTest		KEYWORD2
 	
 	checkCRC		KEYWORD2
-	checkUpdates		KEYWORD2
-	Readout			KEYWORD2
-        
+	isReady			KEYWORD2
+	
+	getAltitude		KEYWORD2
+	getSeaLevel		KEYWORD2        
 	GetPres			KEYWORD2
 	GetTemp			KEYWORD2
 
@@ -75,4 +58,3 @@
 	MS5xxx_CMD_ADC_2048	LITERAL1
 	MS5xxx_CMD_ADC_4096	LITERAL1
 	MS5xxx_CMD_PROM_RD	LITERAL1
-
