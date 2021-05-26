@@ -1,5 +1,5 @@
 /*
-    MS5x.ino 
+    MS5x.h 
 	
 	Header File for MS5x Library.  Provides for i2c communication with MS55xx, MS56xx, MS57xx, and MS58xx barometer sensors
     
