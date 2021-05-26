@@ -48,14 +48,15 @@ void setup() {
 	Serial.begin(115200);
 	while(barometer.connect()>0) { // barometer.connect starts wire and attempts to connect to sensor
 		Serial.println(F("Error connecting..."));
-		delay(500);
+    delay(500);
 	}
 	Serial.println(F("Connected to Sensor"));
+	delay(5);
 }
 
 void loop() {
 
-  	// Compare calcuated CRC value against CRC value stored in sensor's PROM
+  // Compare calcuated CRC value against CRC value stored in sensor's PROM
 	bool crcRes = barometer.checkCRC();
 	Serial.print(F("Sensor CRC Check Results: "));
 	crcRes ? Serial.println(F("CRC Passed")) : Serial.println(F("CRC Failed"));
