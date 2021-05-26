@@ -615,7 +615,12 @@ void MS5x::Readout() {
 	
 	// After conversion process, save the ReadDelay value, then substitute in any desired delay between pollings
 	_READDELAYPREV = _READDELAY;
-	_READDELAY = _POLLDELAY-(_READDELAYPREV*2); // Subtract the conversion time to have a consistent pollDelay between readings
+	
+	if (_POLLDELAY < _READDELAYPREV) {
+		_READDELAY = 0; // ReadDelay should never be less than zero
+	} else {
+		_READDELAY = _POLLDELAY-(_READDELAYPREV*2); // Subtract the conversion time to have a consistent pollDelay between readings
+	}
 	_PREVSTEPTIME = millis();
 }
 
