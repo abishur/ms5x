@@ -1,5 +1,5 @@
 /*
-    MS5x.h 
+    MS5x.h
 	
 	Header File for MS5x Library.  Provides for i2c communication with MS55xx, MS56xx, MS57xx, and MS58xx barometer sensors
     
@@ -113,10 +113,10 @@ class MS5x
 	bool checkCRC(); // Returns true if calculated CRC matches CRC stored in sensor's PROM
 	bool isReady(); // Returns true after temperature and pressure readings have been completed the first time
 	
-	double getSeaLevel(double altitude);
 	double getAltitude(bool temperatureCorrected = false); // Calculates Altitude off of difference between seaLevelPressure and current pressure.  Optionally performs temperature correction.
-	double GetPres();
-	double GetTemp();
+	double getSeaLevel(double altitude); // Calculate pressure at seaLevel based on current pressure reading and assumed current altitude
+	double GetPres(); // Get latest Pressure reading from sensor
+	double GetTemp(); // Get latest Temperature reading from sensor
 	
 	// Variables
 };
