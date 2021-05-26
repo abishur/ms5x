@@ -41,7 +41,7 @@ uint32_t prevTime; // The time, in MS the device was last polled
 
 double prevPressure=0; // The value of the pressure the last time the sensor was polled
 double prevTemperature=0; // The value of the temperature the last time the sensor was polled
-double seaLevel = 0;
+double seaLevelPressure = 0;
 
 void setup() {
 	Serial.begin(115200);
@@ -85,7 +85,7 @@ void loop() {
 		if ((temperature != prevTemperature) || (pressure != prevPressure)) {
 			
 			// Calculate predicted seaLevel pressure based off a known altitude in meters
-			if (seaLevel == 0) seaLevel = barometer.getSeaLevel(217.3); 
+			if (seaLevelPressure == 0) seaLevelPressure = barometer.getSeaLevel(217.3); 
 
 			Serial.print(F("The current pressure is: "));
 			Serial.print(pressure);
@@ -96,7 +96,7 @@ void loop() {
 			Serial.println(F("°C"));
 		
 			Serial.print(F("The calculated pressure at seaLevel is: "));
-			Serial.print(seaLevel);
+			Serial.print(seaLevelPressure);
 			Serial.println(F(" Pascals"));
 		
 			// Calculate current altitude based on pressure reading
