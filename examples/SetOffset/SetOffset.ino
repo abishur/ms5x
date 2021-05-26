@@ -1,14 +1,10 @@
 /*
-    SetOffset.ino 
+    SetPolling.ino 
 	
-	Shows how to connect to sensor and set tempearture and pressure offsets.
-	
-	I recommend adjusting your polling rate of the sensor until there is no significant change due to self-heating
-	then using a reliable temperature guage that has been tested in an ice water bath / boiling water to compare
-	the known reliable values of the temperature guage to the values the sensor is reporting back.
-	
-	Once your temperature is calibrated you can test the pressure readings.  Pressure must be done second as this sensor
-	uses the sensor's temperature to adjust pressure readings.
+	Shows how to set a polling rate for your sensor so it is not being constantly asked for new values.
+	Polling a sensor too quickly can lead to the device self heating resulting in inaccurate data.  If you observe
+	temperature drift try decreasing the polling rate or lowering the oversampling ratio.  See the AdvancedMS5x Example 
+	sketch for how to change the oversampling ratio.
     
 	Created 2021-05-25 
 	By Matthew Bennett
@@ -44,6 +40,11 @@
 
 MS5x barometer(&Wire);
 
+uint32_t prevTime; // The time, in MS the device was last polled
+
+double prevPressure=0; // The value of the pressure the last time the sensor was polled
+double prevTemperature=0; // The value of the temperature the last time the sensor was polled
+
 void setup() {
 	Serial.begin(115200);
 	while(barometer.connect()>0) { // barometer.connect starts wire and attempts to connect to sensor
@@ -51,10 +52,7 @@ void setup() {
 		delay(500);
 	}
 	Serial.println(F("Connected to Sensor"));
-	delay(5); // Allow Sensor to finish resetting after initial connection
-	
-	barometer.setTOffset(-200); // Set the Temperature offset to be -2.00°C from the measured temperature
-	barometer.setPOffset(50); // Set the Pressure offset to be 50 Pascals higer (0.5 Millibars) from the measured temperature
+	barometer.setDelay(1000); // barometer will wait 1 second before taking new temperature and pressure readings
 }
 
 void loop() {
@@ -81,9 +79,21 @@ void loop() {
 	if (barometer.isReady()) { 
 		temperature = barometer.GetTemp(); // Returns temperature in C
 		pressure = barometer.GetPres(); // Returns pressure in Pascals
-		Serial.print(F("The Temperature is: "));
-		Serial.println(temperature);
-		Serial.print(F("The Pressure is: "));
-		Serial.println(pressure);
+		
+		// If a new temperature or pressure reading comes in then the sensor has been polled.
+		// Print the new values and the time, in ms, between readings
+		if ((temperature != prevTemperature) || (pressure != prevPressure)) {
+			
+			Serial.print(F("The New Temperature is: "));
+			Serial.println(temperature);
+			Serial.print(F("The New Pressure is: "));
+			Serial.println(pressure);
+			Serial.print(F("The Time between readings was: "));
+			Serial.print(millis() - prevTime);
+			Serial.println(F(" ms"));
+			prevTime = millis();
+			prevTemperature = temperature;
+			prevPressure = pressure;
+		}
 	}
 }
