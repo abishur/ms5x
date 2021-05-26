@@ -114,8 +114,8 @@ void loop() {
 			Serial.println();
 			Serial.println();
 
-     prevTemperature = temperature;
-     prevPressure = pressure;
+			prevTemperature = temperature;
+			prevPressure = pressure;
 		}
 	}
 }
