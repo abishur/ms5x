@@ -51,6 +51,7 @@ void setup() {
 		delay(500);
 	}
 	Serial.println(F("Connected to Sensor"));
+	delay(5); // Allow Sensor to finish resetting after initial connection
 	
 	barometer.setTOffset(-200); // Set the Temperature offset to be -2.00°C from the measured temperature
 	barometer.setPOffset(50); // Set the Pressure offset to be 50 Pascals higer (0.5 Millibars) from the measured temperature
@@ -58,8 +59,8 @@ void setup() {
 
 void loop() {
 	
-	double pressure;
-	double temperature;
+	double pressure = 0;
+	double temperature = 0;
 	/* 
 	In order to not have any delays used in code, checkUpdates cycles through sensor read process
 	Step 1: Ask for raw temperature calculation to be performed
