@@ -44,12 +44,13 @@ void setup() {
 		delay(500);
 	}
 	Serial.println(F("Connected to Sensor"));
+	delay(5);
 }
 
 void loop() {
 	
-	double pressure;
-	double temperature;
+	double pressure=0;
+	double temperature=0;
 	/* 
 	In order to not have any delays used in code, checkUpdates cycles through sensor read process
 	Step 1: Ask for raw temperature calculation to be performed
